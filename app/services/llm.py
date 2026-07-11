@@ -142,205 +142,29 @@ def _generate_response(prompt: str) -> str:
         llm_provider = config.app.get("llm_provider", "openai")
         logger.info(f"llm provider: {llm_provider}")
         api_version = ""  # for azure
-        if llm_provider == "moonshot":
-            api_key = config.app.get("moonshot_api_key")
-            model_name = config.app.get("moonshot_model_name")
-            base_url = "https://api.moonshot.cn/v1"
-        elif llm_provider == "ollama":
-            # api_key = config.app.get("openai_api_key")
-            api_key = "ollama"  # any string works but you are required to have one
-            model_name = config.app.get("ollama_model_name")
-            base_url = config.app.get("ollama_base_url", "")
-            if not base_url:
-                base_url = config.get_default_ollama_base_url()
-        elif llm_provider == "openai":
-            api_key = config.app.get("openai_api_key")
-            model_name = config.app.get("openai_model_name")
-            base_url = config.app.get("openai_base_url", "")
-            if not base_url:
-                base_url = "https://api.openai.com/v1"
-        elif llm_provider == "aihubmix":
-            api_key = config.app.get("aihubmix_api_key")
-            model_name = config.app.get("aihubmix_model_name")
-            base_url = config.app.get("aihubmix_base_url", "")
-            # AIHubMix 兼容 OpenAI Chat Completions 协议。这里使用独立
-            # provider 保存合作方的默认网关和推荐模型，避免把推广链接、
-            # 默认模型等合作配置混进普通 OpenAI provider，影响现有用户。
-            if not base_url:
-                base_url = "https://aihubmix.com/v1"
-            if not model_name:
-                model_name = "gpt-5.4-mini"
-        elif llm_provider == "aimlapi":
-            api_key = config.app.get("aimlapi_api_key")
-            model_name = config.app.get("aimlapi_model_name")
-            base_url = config.app.get("aimlapi_base_url", "")
-            if not base_url:
-                base_url = "https://api.aimlapi.com/v1"
-            if not model_name:
-                model_name = "openai/gpt-4o-mini"
-        elif llm_provider == "oneapi":
-            api_key = config.app.get("oneapi_api_key")
-            model_name = config.app.get("oneapi_model_name")
-            base_url = config.app.get("oneapi_base_url", "")
-        elif llm_provider == "azure":
-            api_key = config.app.get("azure_api_key")
-            model_name = config.app.get("azure_model_name")
-            base_url = config.app.get("azure_base_url", "")
-            api_version = config.app.get("azure_api_version", "2024-02-15-preview")
-        elif llm_provider == "gemini":
-            api_key = config.app.get("gemini_api_key")
-            model_name = config.app.get("gemini_model_name")
-            base_url = config.app.get("gemini_base_url", "")
-            # Gemini 旧模型名已经陆续下线，这里自动兼容历史配置，
-            # 避免用户沿用旧值时直接收到 404。
-            if not model_name:
-                model_name = _DEFAULT_GEMINI_MODEL
-            elif model_name in _DEPRECATED_GEMINI_MODELS:
-                logger.warning(
-                    f"gemini model '{model_name}' is deprecated, fallback to '{_DEFAULT_GEMINI_MODEL}'"
-                )
-                model_name = _DEFAULT_GEMINI_MODEL
-        elif llm_provider == "grok":
-            api_key = config.app.get("grok_api_key")
-            model_name = config.app.get("grok_model_name")
-            base_url = config.app.get("grok_base_url", "")
-            if not base_url:
-                base_url = "https://api.x.ai/v1"
-        elif llm_provider == "groq":
-            api_key = config.app.get("groq_api_key")
-            model_name = config.app.get("groq_model_name")
-            if not model_name:
-                model_name = "llama-3.3-70b-versatile"
-            base_url = config.app.get("groq_base_url", "")
-            if not base_url:
-                base_url = "https://api.groq.com/openai/v1"
-        elif llm_provider == "qwen":
-            api_key = config.app.get("qwen_api_key")
-            model_name = config.app.get("qwen_model_name")
-            base_url = "***"
-        elif llm_provider == "cloudflare":
-            api_key = config.app.get("cloudflare_api_key")
-            model_name = config.app.get("cloudflare_model_name")
-            account_id = config.app.get("cloudflare_account_id")
-            base_url = "***"
-        elif llm_provider == "minimax":
-            api_key = config.app.get("minimax_api_key")
-            model_name = config.app.get("minimax_model_name")
-            base_url = config.app.get("minimax_base_url", "")
-            if not base_url:
-                base_url = "https://api.minimax.io/v1"
-        elif llm_provider == "evolink":
-            api_key = config.app.get("evolink_api_key")
-            model_name = config.app.get("evolink_model_name")
-            base_url = config.app.get("evolink_base_url", "")
-            if not base_url:
-                base_url = "https://direct.evolink.ai/v1"
-            if not model_name:
-                model_name = "gpt-5.5"
-        elif llm_provider == "mimo":
-            api_key = config.app.get("mimo_api_key")
-            model_name = config.app.get("mimo_model_name")
-            base_url = config.app.get("mimo_base_url", "")
-            # Xiaomi MiMo 官方文档说明其兼容 OpenAI Chat Completions 协议。
-            # 这里使用独立 provider 保存默认地址和模型名，用户不用把 MiMo
-            # 当作 OpenAI 自定义 base_url 配置，也便于后续继续接入 MiMo
-            # 多模态或 TTS 能力时保持边界清晰。
-            if not base_url:
-                base_url = "https://api.xiaomimimo.com/v1"
-            if not model_name:
-                model_name = "mimo-v2.5-pro"
-        elif llm_provider == "volcengine":
-            api_key = config.app.get("volcengine_api_key")
-            model_name = config.app.get("volcengine_model_name")
-            base_url = config.app.get("volcengine_base_url", "")
-            # 火山引擎方舟提供 OpenAI-compatible Chat Completions 接口。
-            # 独立 provider 可以让用户直接选择 VolcEngine，而不用把 Ark
-            # 的 key/base_url 混到通用 OpenAI 配置里，后续维护也更清晰。
-            if not base_url:
-                base_url = "https://ark.cn-beijing.volces.com/api/v3"
-            if not model_name:
-                model_name = "doubao-seed-2-1-turbo-260628"
-        elif llm_provider == "deepseek":
-            api_key = config.app.get("deepseek_api_key")
-            model_name = config.app.get("deepseek_model_name")
-            base_url = config.app.get("deepseek_base_url")
-            if not base_url:
-                base_url = "https://api.deepseek.com"
-        elif llm_provider == "modelscope":
-            api_key = config.app.get("modelscope_api_key")
-            model_name = config.app.get("modelscope_model_name")
-            base_url = config.app.get("modelscope_base_url")
-            if not base_url:
-                base_url = "https://api-inference.modelscope.cn/v1/"
-        elif llm_provider == "ernie":
-            api_key = config.app.get("ernie_api_key")
-            secret_key = config.app.get("ernie_secret_key")
-            base_url = config.app.get("ernie_base_url")
-            model_name = "***"
-            if not secret_key:
-                raise ValueError(
-                    f"{llm_provider}: secret_key is not set, please set it in the config.toml file."
-                )
-        elif llm_provider == "pollinations":
-            try:
-                base_url = config.app.get("pollinations_base_url", "")
-                if not base_url:
-                    base_url = "https://text.pollinations.ai/openai"
-                model_name = config.app.get("pollinations_model_name", "openai-fast")
-
-                # Prepare the payload
-                payload = {
-                    "model": model_name,
-                    "messages": [
-                        {"role": "user", "content": prompt}
-                    ],
-                    "seed": 101  # Optional but helps with reproducibility
-                }
-
-                # Optional parameters if configured
-                if config.app.get("pollinations_private"):
-                    payload["private"] = True
-                if config.app.get("pollinations_referrer"):
-                    payload["referrer"] = config.app.get("pollinations_referrer")
-
-                headers = {
-                    "Content-Type": "application/json"
-                }
-
-                # Make the API request
-                response = requests.post(base_url, headers=headers, json=payload)
-                response.raise_for_status()
-                result = response.json()
-
-                if result and "choices" in result and len(result["choices"]) > 0:
-                    content = result["choices"][0]["message"]["content"]
-                    return _normalize_text_response(content, llm_provider)
-                else:
-                    raise Exception(f"[{llm_provider}] returned an invalid response format")
-
-            except requests.exceptions.RequestException as e:
-                raise Exception(f"[{llm_provider}] request failed: {str(e)}")
-            except Exception as e:
-                raise Exception(f"[{llm_provider}] error: {str(e)}")
-
-        elif llm_provider == "litellm":
-            model_name = config.app.get("litellm_model_name")
+        if llm_provider == "openrouter":
+            api_key = config.app.get("openrouter_api_key")
+            model_name = config.app.get("openrouter_model_name", "openai/gpt-oss-120b")
+            base_url = config.app.get("openrouter_base_url", "https://openrouter.ai/api/v1")
+        elif llm_provider == "nvidia":
+            api_key = config.app.get("nvidia_api_key")
+            model_name = config.app.get("nvidia_model_name")
+            base_url = config.app.get("nvidia_base_url", "https://integrate.api.nvidia.com/v1")
         else:
             raise ValueError(f"{llm_provider}: unsupported llm provider")
 
-        if llm_provider not in ["pollinations", "ollama", "litellm"]:  # Skip validation for providers that don't require API key
-            if not api_key:
-                raise ValueError(
-                    f"{llm_provider}: api_key is not set, please set it in the config.toml file."
-                )
-            if not model_name:
-                raise ValueError(
-                    f"{llm_provider}: model_name is not set, please set it in the config.toml file."
-                )
-            if not base_url and llm_provider not in ["gemini"]:
-                raise ValueError(
-                    f"{llm_provider}: base_url is not set, please set it in the config.toml file."
-                )
+        if not api_key:
+            raise ValueError(
+                f"{llm_provider}: api_key is not set, please set it in the config.toml file."
+            )
+        if not model_name:
+            raise ValueError(
+                f"{llm_provider}: model_name is not set, please set it in the config.toml file."
+            )
+        if not base_url:
+            raise ValueError(
+                f"{llm_provider}: base_url is not set, please set it in the config.toml file."
+            )
 
         if llm_provider == "qwen":
             import dashscope
@@ -627,7 +451,23 @@ def build_script_prompt(
 - number of paragraphs: {paragraph_number}
 """.rstrip()
     if language:
-        prompt += f"\n- language: {language}"
+        lang_names = {
+            "en": "English",
+            "hi": "Hindi",
+            "bn": "Bengali",
+            "ta": "Tamil",
+            "te": "Telugu",
+            "mr": "Marathi",
+            "gu": "Gujarati",
+            "kn": "Kannada",
+            "ml": "Malayalam",
+            "ur": "Urdu",
+            "pa": "Punjabi",
+            "or": "Oriya",
+        }
+        lang_name = lang_names.get(language.lower(), language)
+        prompt += f"\n- language: {lang_name}"
+        prompt += f"\n- CONSTRAINT: You MUST write the entire video script response in the {lang_name} language. Do not write it in English or any other language unless the specified language is English."
     if video_script_prompt:
         prompt += f"""
 

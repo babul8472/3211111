@@ -28,24 +28,122 @@ from app.services import task as tm
 from app.utils import utils
 
 st.set_page_config(
-    page_title="MoneyPrinterTurbo",
-    page_icon="🤖",
+    page_title="IndicShorts AI",
+    page_icon="🎬",
     layout="wide",
     initial_sidebar_state="auto",
     menu_items={
         "Report a bug": "https://github.com/harry0703/MoneyPrinterTurbo/issues",
-        "About": "# MoneyPrinterTurbo\nSimply provide a topic or keyword for a video, and it will "
+        "About": "# IndicShorts AI\nSimply provide a topic or keyword for a video, and it will "
         "automatically generate the video copy, video materials, video subtitles, "
         "and video background music before synthesizing a high-definition short "
-        "video.\n\nhttps://github.com/harry0703/MoneyPrinterTurbo",
+        "video.",
     },
 )
 
 
 streamlit_style = """
 <style>
-h1 {
-    padding-top: 0 !important;
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Apply base font and styles */
+.stApp {
+    font-family: 'Inter', sans-serif !important;
+    background: #0f0f12 !important;
+    color: #e2e8f0 !important;
+}
+
+/* Custom premium typography */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif !important;
+    color: #ffffff !important;
+}
+
+/* Glassmorphism Containers & Cards */
+div[data-testid="stVerticalBlock"] > div[style*="border"] {
+    background: rgba(20, 20, 26, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 16px !important;
+    padding: 24px !important;
+    box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    margin-bottom: 20px !important;
+}
+
+/* Form fields (inputs, textareas, selectboxes) */
+div[data-testid="stTextInput"] input, 
+div[data-testid="stTextArea"] textarea,
+div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+    background-color: rgba(10, 10, 14, 0.8) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    font-family: 'Inter', sans-serif !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+div[data-testid="stTextInput"] input:focus, 
+div[data-testid="stTextArea"] textarea:focus,
+div[data-testid="stSelectbox"] div[data-baseweb="select"]:focus-within {
+    border-color: #FF0844 !important;
+    box-shadow: 0 0 12px rgba(255, 8, 68, 0.25) !important;
+}
+
+/* Make slider matching brand styling */
+div[data-testid="stSlider"] {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+/* Custom premium styling for the primary button (Generate Video) */
+button[kind="primary"] {
+    background: linear-gradient(135deg, #FF0844 0%, #FFB199 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 14px 28px !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    font-family: 'Outfit', sans-serif !important;
+    box-shadow: 0 6px 20px rgba(255, 8, 68, 0.35) !important;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    width: 100% !important;
+    height: auto !important;
+}
+
+button[kind="primary"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 30px rgba(255, 8, 68, 0.55) !important;
+    border: none !important;
+}
+
+button[kind="primary"]:active {
+    transform: translateY(1px) !important;
+}
+
+/* Custom premium secondary buttons */
+button[kind="secondary"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    color: #e2e8f0 !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}
+
+button[kind="secondary"]:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+}
+
+/* Info/Success/Warning alert styling */
+div[data-testid="stNotification"] {
+    border-radius: 14px !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    background-color: rgba(20, 20, 26, 0.9) !important;
 }
 </style>
 """
@@ -139,7 +237,7 @@ if "match_materials_to_script" not in st.session_state:
         config.app.get("match_materials_to_script", False)
     )
 if "ui_language" not in st.session_state:
-    st.session_state["ui_language"] = config.ui.get("language", system_locale)
+    st.session_state["ui_language"] = config.ui.get("language", "en")
 if "local_video_materials" not in st.session_state:
     # 记住用户最近一次已经落盘的本地素材，避免仅修改文案后二次生成时丢失素材列表。
     st.session_state["local_video_materials"] = []
@@ -151,14 +249,40 @@ locales = utils.load_locales(i18n_dir)
 title_col, lang_col = st.columns([3, 1])
 
 with title_col:
-    st.title(f"MoneyPrinterTurbo v{config.project_version}")
+    st.markdown(
+        f"""
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+            <span style="font-size: 2.8rem; line-height: 1;">🎬</span>
+            <div>
+                <h1 style="margin: 0; padding: 0; background: linear-gradient(135deg, #FF0844 0%, #FFB199 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 2.5rem; line-height: 1.1;">IndicShorts AI</h1>
+                <p style="margin: 5px 0 0 0; font-family: 'Inter', sans-serif; font-size: 0.9rem; color: #8892b0; letter-spacing: 0.5px;">Premium AI Short Video Generator • v{config.project_version}</p>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 with lang_col:
+    allowed_ui_languages = {
+        "en": "English",
+        "hi": "Hindi (हिंदी)",
+        "bn": "Bengali (বাংলা)",
+        "ta": "Tamil (தமிழ்)",
+        "te": "Telugu (తెలుగు)",
+        "mr": "Marathi (मराठी)",
+        "gu": "Gujarati (ગુજરાતી)",
+        "kn": "Kannada (ಕನ್ನಡ)",
+        "ml": "Malayalam (മലയാളം)",
+        "ur": "Urdu (اردو)",
+        "pa": "Punjabi (ਪੰਜਾਬੀ)",
+        "or": "Oriya (ଓଡ଼ିଆ)",
+    }
     display_languages = []
     selected_index = 0
-    for i, code in enumerate(locales.keys()):
-        display_languages.append(f"{code} - {locales[code].get('Language')}")
-        if code == st.session_state.get("ui_language", ""):
+    sorted_keys = ["en"] + [k for k in allowed_ui_languages.keys() if k != "en"]
+    for i, code in enumerate(sorted_keys):
+        display_languages.append(f"{code} - {allowed_ui_languages[code]}")
+        if code == st.session_state.get("ui_language", "en"):
             selected_index = i
 
     selected_language = st.selectbox(
@@ -288,12 +412,12 @@ locales = utils.load_locales(i18n_dir)
 
 
 def tr(key):
-    loc = locales.get(st.session_state["ui_language"], {})
+    loc = locales.get(st.session_state["ui_language"]) or locales.get("en") or {}
     return loc.get("Translation", {}).get(key, key)
 
 
 def tr_optional(key):
-    loc = locales.get(st.session_state["ui_language"], {})
+    loc = locales.get(st.session_state["ui_language"]) or locales.get("en") or {}
     value = loc.get("Translation", {}).get(key, "")
     return value if value else ""
 
@@ -388,36 +512,17 @@ if not config.app.get("hide_config", False):
             # 下拉框展示文本和后端 provider id 分开维护，避免 UI 文案变化
             # 污染 `config.app["llm_provider"]` 这类稳定配置值。
             llm_provider_options = [
-                ("Kimi/Moonshot", "moonshot"),
-                ("OpenAI", "openai"),
-                ("AIHubMix", "aihubmix"),
-                ("AIML API", "aimlapi"),
-                ("EvoLink", "evolink"),
-                ("VolcEngine", "volcengine"),
-                ("Azure", "azure"),
-                ("Qwen", "qwen"),
-                ("DeepSeek", "deepseek"),
-                ("ModelScope", "modelscope"),
-                ("Gemini", "gemini"),
-                ("Grok", "grok"),
-                ("Groq", "groq"),
-                ("Ollama", "ollama"),
-                ("OneAPI", "oneapi"),
-                ("Cloudflare", "cloudflare"),
-                ("ERNIE", "ernie"),
-                ("MiniMax", "minimax"),
-                ("MiMo", "mimo"),
-                ("Pollinations", "pollinations"),
-                ("LiteLLM", "litellm"),
+                ("OpenRouter", "openrouter"),
+                ("Nvidia", "nvidia"),
             ]
             llm_provider_ids = [provider_id for _, provider_id in llm_provider_options]
             llm_provider_labels = {
                 provider_id: get_llm_provider_label(provider_id, label)
                 for label, provider_id in llm_provider_options
             }
-            saved_llm_provider = config.app.get("llm_provider", "moonshot").lower()
+            saved_llm_provider = config.app.get("llm_provider", "openrouter").lower()
             if saved_llm_provider not in llm_provider_ids:
-                saved_llm_provider = "moonshot"
+                saved_llm_provider = "openrouter"
 
             # Streamlit 会把没有 key 的 selectbox 视为一个由 label/options/index
             # 共同决定的临时控件。如果每次选择后都根据 config.app 重新计算 index，
@@ -450,99 +555,17 @@ if not config.app.get("hide_config", False):
             llm_account_id = config.app.get(f"{llm_provider}_account_id", "")
 
             provider_tip_context = {}
-            if llm_provider == "ollama":
+            if llm_provider == "openrouter":
                 if not llm_model_name:
-                    llm_model_name = "qwen:7b"
+                    llm_model_name = "openai/gpt-oss-120b"
                 if not llm_base_url:
-                    llm_base_url = config.get_default_ollama_base_url()
-                docker_hint = ""
-                if config.is_running_in_container():
-                    docker_hint = tr_optional("llm_provider_tips.ollama.docker_hint")
-                provider_tip_context["docker_hint"] = docker_hint
+                    llm_base_url = "https://openrouter.ai/api/v1"
 
-            if llm_provider == "openai":
+            if llm_provider == "nvidia":
                 if not llm_model_name:
-                    llm_model_name = "gpt-3.5-turbo"
-
-            if llm_provider == "aihubmix":
-                if not llm_model_name:
-                    llm_model_name = "gpt-5.4-mini"
+                    llm_model_name = ""
                 if not llm_base_url:
-                    llm_base_url = "https://aihubmix.com/v1"
-
-            if llm_provider == "aimlapi":
-                if not llm_model_name:
-                    llm_model_name = "openai/gpt-4o-mini"
-                if not llm_base_url:
-                    llm_base_url = "https://api.aimlapi.com/v1"
-
-            if llm_provider == "evolink":
-                if not llm_model_name:
-                    llm_model_name = "gpt-5.5"
-                if not llm_base_url:
-                    llm_base_url = "https://direct.evolink.ai/v1"
-
-            if llm_provider == "volcengine":
-                if not llm_model_name:
-                    llm_model_name = "doubao-seed-2-1-turbo-260628"
-                if not llm_base_url:
-                    llm_base_url = "https://ark.cn-beijing.volces.com/api/v3"
-
-            if llm_provider == "moonshot":
-                if not llm_model_name:
-                    llm_model_name = "kimi-k2.7-code"
-
-            if llm_provider == "oneapi":
-                if not llm_model_name:
-                    llm_model_name = (
-                        "claude-3-5-sonnet-20240620"  # 默认模型，可以根据需要调整
-                    )
-
-            if llm_provider == "qwen":
-                if not llm_model_name:
-                    llm_model_name = "qwen-max"
-
-            if llm_provider == "gemini":
-                if not llm_model_name:
-                    llm_model_name = "gemini-1.0-pro"
-
-            if llm_provider == "grok":
-                if not llm_model_name:
-                    llm_model_name = "grok-4.3"
-                if not llm_base_url:
-                    llm_base_url = "https://api.x.ai/v1"
-
-            if llm_provider == "groq":
-                if not llm_model_name:
-                    llm_model_name = "llama-3.3-70b-versatile"
-                if not llm_base_url:
-                    llm_base_url = "https://api.groq.com/openai/v1"
-
-            if llm_provider == "deepseek":
-                if not llm_model_name:
-                    llm_model_name = "deepseek-chat"
-                if not llm_base_url:
-                    llm_base_url = "https://api.deepseek.com"
-
-            if llm_provider == "mimo":
-                if not llm_model_name:
-                    llm_model_name = "mimo-v2.5-pro"
-                if not llm_base_url:
-                    llm_base_url = "https://api.xiaomimimo.com/v1"
-
-            if llm_provider == "modelscope":
-                if not llm_model_name:
-                    llm_model_name = "Qwen/Qwen3-32B"
-                if not llm_base_url:
-                    llm_base_url = "https://api-inference.modelscope.cn/v1/"
-
-            if llm_provider == "pollinations":
-                if not llm_model_name:
-                    llm_model_name = "default"
-
-            if llm_provider == "litellm":
-                if not llm_model_name:
-                    llm_model_name = "openai/gpt-4o-mini"
+                    llm_base_url = "https://integrate.api.nvidia.com/v1"
 
             tips = get_llm_provider_tips(llm_provider, **provider_tip_context)
             if tips:
@@ -672,9 +695,19 @@ with left_panel:
 
         video_languages = [
             (tr("Auto Detect"), ""),
+            (tr("English"), "en"),
+            (tr("Hindi"), "hi"),
+            (tr("Bengali"), "bn"),
+            (tr("Tamil"), "ta"),
+            (tr("Telugu"), "te"),
+            (tr("Marathi"), "mr"),
+            (tr("Gujarati"), "gu"),
+            (tr("Kannada"), "kn"),
+            (tr("Malayalam"), "ml"),
+            (tr("Urdu"), "ur"),
+            (tr("Punjabi"), "pa"),
+            (tr("Oriya"), "or"),
         ]
-        for code in support_locales:
-            video_languages.append((code, code))
 
         selected_index = st.selectbox(
             tr("Script Language"),
@@ -914,15 +947,13 @@ with middle_panel:
             (voice.NO_VOICE_NAME, tr("No Voice")),
             ("azure-tts-v1", "Azure TTS V1"),
             ("azure-tts-v2", "Azure TTS V2"),
-            ("siliconflow", "SiliconFlow TTS"),
             ("gemini-tts", "Google Gemini TTS"),
-            ("mimo-tts", "Xiaomi MiMo TTS"),
-            ("elevenlabs", "ElevenLabs TTS"),
-            ("chatterbox", "Chatterbox TTS"),
         ]
 
         # 获取保存的TTS服务器，默认为v1
         saved_tts_server = config.ui.get("tts_server", "azure-tts-v1")
+        if saved_tts_server not in [s[0] for s in tts_servers]:
+            saved_tts_server = "azure-tts-v1"
         saved_tts_server_index = 0
         for i, (server_value, _) in enumerate(tts_servers):
             if server_value == saved_tts_server:
@@ -946,49 +977,38 @@ with middle_panel:
             # 无配音是显式模式，只提供一个稳定 sentinel。这样普通 TTS 的空配置
             # 不会被误判为静音，后端也能继续通过同一条音频/字幕流程生成视频。
             filtered_voices = [voice.NO_VOICE_NAME]
-        elif selected_tts_server == "siliconflow":
-            # 获取硅基流动的声音列表
-            filtered_voices = voice.get_siliconflow_voices()
         elif selected_tts_server == "gemini-tts":
             # 获取Gemini TTS的声音列表
             filtered_voices = voice.get_gemini_voices()
-        elif selected_tts_server == "mimo-tts":
-            # 获取 Xiaomi MiMo TTS 的预置音色列表
-            filtered_voices = voice.get_mimo_voices()
-        elif selected_tts_server == "elevenlabs":
-            # Read from session_state first so the API key is available before
-            # the Play Voice button runs (which is earlier in the script than
-            # the API key text_input widget).
-            saved_elevenlabs_api_key = st.session_state.get(
-                "elevenlabs_api_key_input",
-                config.elevenlabs.get("api_key", ""),
-            )
-            if saved_elevenlabs_api_key:
-                config.elevenlabs["api_key"] = saved_elevenlabs_api_key
-            cache_key = f"elevenlabs_voices_{saved_elevenlabs_api_key}"
-            if cache_key not in st.session_state:
-                st.session_state[cache_key] = voice.get_elevenlabs_voices(
-                    saved_elevenlabs_api_key
-                )
-            filtered_voices = st.session_state[cache_key]
-        elif selected_tts_server == "chatterbox":
-            # 自托管 Chatterbox 服务的预置音色（来自 [chatterbox] voices 配置）
-            _sync_chatterbox_config_from_session_state()
-            filtered_voices = voice.get_chatterbox_voices()
         else:
             # 获取Azure的声音列表
             all_voices = voice.get_all_azure_voices(filter_locals=None)
 
-            # 根据选择的TTS服务器筛选声音
+            # Filter Azure voices by Indian languages & English
+            allowed_prefixes = ("en-IN", "en-US", "hi-IN", "bn-IN", "ta-IN", "te-IN", "mr-IN", "gu-IN", "kn-IN", "ml-IN", "ur-IN", "pa-IN", "or-IN")
+            selected_lang = params.video_language  # e.g., "en", "hi", "bn", etc. or ""
+            
+            # Map selected language prefix
+            if selected_lang == "en":
+                lang_prefixes = ("en-IN-", "en-US-")
+            elif selected_lang:
+                lang_prefixes = (f"{selected_lang}-IN-",)
+            else:
+                lang_prefixes = tuple(f"{p}-" for p in allowed_prefixes)
+
+            temp_voices = []
             for v in all_voices:
                 if selected_tts_server == "azure-tts-v2":
-                    # V2版本的声音名称中包含"v2"
                     if "V2" in v:
-                        filtered_voices.append(v)
+                        temp_voices.append(v)
                 else:
-                    # V1版本的声音名称中不包含"v2"
                     if "V2" not in v:
-                        filtered_voices.append(v)
+                        temp_voices.append(v)
+
+            # Apply prefix filtering
+            for v in temp_voices:
+                if any(v.startswith(prefix) for prefix in lang_prefixes):
+                    filtered_voices.append(v)
 
         if selected_tts_server == voice.NO_VOICE_NAME:
             friendly_names = {voice.NO_VOICE_NAME: tr("No Voice")}
@@ -1128,134 +1148,24 @@ with middle_panel:
             config.azure["speech_region"] = azure_speech_region
             config.azure["speech_key"] = azure_speech_key
 
-        # 当选择硅基流动时，显示API key输入框和说明信息
-        if selected_tts_server == "siliconflow" or (
-            voice_name and voice.is_siliconflow_voice(voice_name)
+        # 当选择 Google Gemini TTS 时，显示 API Key 输入框和获取链接
+        if selected_tts_server == "gemini-tts" or (
+            voice_name and voice.is_gemini_voice(voice_name)
         ):
-            saved_siliconflow_api_key = config.siliconflow.get("api_key", "")
-
-            siliconflow_api_key = st.text_input(
-                tr("SiliconFlow API Key"),
-                value=saved_siliconflow_api_key,
+            saved_gemini_api_key = config.app.get("gemini_api_key", "")
+            gemini_api_key = st.text_input(
+                "Gemini API Key",
+                value=saved_gemini_api_key,
                 type="password",
-                key="siliconflow_api_key_input",
+                key="gemini_tts_api_key_input",
+                help="Enter your Gemini API key from Google AI Studio",
             )
-
-            # 显示硅基流动的说明信息
-            tips = get_tts_provider_tips("siliconflow")
-            if tips:
-                st.info(tips)
-
-            config.siliconflow["api_key"] = siliconflow_api_key
-
-        # 当选择 Xiaomi MiMo TTS 时，复用 MiMo LLM provider 的 API Key。
-        # 这样用户如果同时使用 MiMo 生成文案和语音，只需要维护一份密钥。
-        if selected_tts_server == "mimo-tts" or (
-            voice_name and voice.is_mimo_voice(voice_name)
-        ):
-            saved_mimo_api_key = config.app.get("mimo_api_key", "")
-
-            mimo_api_key = st.text_input(
-                tr("MiMo API Key"),
-                value=saved_mimo_api_key,
-                type="password",
-                key="mimo_tts_api_key_input",
+            st.markdown(
+                "[Get Gemini API Key from Google AI Studio](https://aistudio.google.com/)",
+                unsafe_allow_html=True,
             )
+            config.app["gemini_api_key"] = gemini_api_key
 
-            tips = get_tts_provider_tips("mimo")
-            if tips:
-                st.info(tips)
-
-            config.app["mimo_api_key"] = mimo_api_key
-
-        # ElevenLabs API key section
-        if selected_tts_server == "elevenlabs" or (
-            voice_name and voice.is_elevenlabs_voice(voice_name)
-        ):
-            saved_elevenlabs_api_key = config.elevenlabs.get("api_key", "")
-
-            elevenlabs_api_key = st.text_input(
-                tr("ElevenLabs API Key"),
-                value=saved_elevenlabs_api_key,
-                type="password",
-                key="elevenlabs_api_key_input",
-            )
-
-            _elevenlabs_models = [
-                "eleven_multilingual_v2",
-                "eleven_flash_v2_5",
-                "eleven_v3",
-            ]
-            saved_elevenlabs_model = config.elevenlabs.get(
-                "model_id", "eleven_multilingual_v2"
-            )
-            if saved_elevenlabs_model not in _elevenlabs_models:
-                saved_elevenlabs_model = "eleven_multilingual_v2"
-            elevenlabs_model = st.selectbox(
-                tr("ElevenLabs Model"),
-                options=_elevenlabs_models,
-                index=_elevenlabs_models.index(saved_elevenlabs_model),
-                key="elevenlabs_model_select",
-            )
-            config.elevenlabs["model_id"] = elevenlabs_model
-
-            tips = get_tts_provider_tips("elevenlabs")
-            if tips:
-                st.info(tips)
-
-            if elevenlabs_api_key != saved_elevenlabs_api_key:
-                for k in list(st.session_state.keys()):
-                    if k.startswith("elevenlabs_voices_"):
-                        del st.session_state[k]
-
-            config.elevenlabs["api_key"] = elevenlabs_api_key
-
-        # Chatterbox API settings section (self-hosted, OpenAI-compatible)
-        if selected_tts_server == "chatterbox" or (
-            voice_name and voice.is_chatterbox_voice(voice_name)
-        ):
-            chatterbox_base_url = st.text_input(
-                tr("Chatterbox Base URL"),
-                value=config.chatterbox.get("base_url") or DEFAULT_CHATTERBOX_BASE_URL,
-                key="chatterbox_base_url_input",
-                placeholder=tr("Chatterbox Base URL Placeholder"),
-            )
-            config.chatterbox["base_url"] = (chatterbox_base_url or "").strip()
-
-            chatterbox_api_key = st.text_input(
-                tr("Chatterbox API Key"),
-                value=config.chatterbox.get("api_key", ""),
-                type="password",
-                key="chatterbox_api_key_input",
-            )
-            config.chatterbox["api_key"] = chatterbox_api_key
-
-            chatterbox_model = st.text_input(
-                tr("Chatterbox Model"),
-                value=config.chatterbox.get("model_id") or DEFAULT_CHATTERBOX_MODEL,
-                key="chatterbox_model_input",
-            )
-            config.chatterbox["model_id"] = (
-                chatterbox_model or DEFAULT_CHATTERBOX_MODEL
-            ).strip()
-
-            _saved_chatterbox_voices = (
-                _parse_chatterbox_voices(config.chatterbox.get("voices"))
-                or DEFAULT_CHATTERBOX_VOICES
-            )
-            if isinstance(_saved_chatterbox_voices, list):
-                _saved_chatterbox_voices = ", ".join(_saved_chatterbox_voices)
-            chatterbox_voices = st.text_input(
-                tr("Chatterbox Voices"),
-                value=str(_saved_chatterbox_voices or ""),
-                key="chatterbox_voices_input",
-                placeholder=tr("Chatterbox Voices Placeholder"),
-            )
-            config.chatterbox["voices"] = _parse_chatterbox_voices(chatterbox_voices)
-
-            tips = get_tts_provider_tips("chatterbox")
-            if tips:
-                st.info(tips)
 
         params.voice_volume = st.selectbox(
             tr("Speech Volume"),
@@ -1324,52 +1234,54 @@ with right_panel:
     with st.container(border=True):
         st.write(tr("Subtitle Settings"))
         params.subtitle_enabled = st.checkbox(tr("Enable Subtitles"), value=True)
+        
+        # Map selected language to default font
+        language_to_font_map = {
+            "hi": "NotoSansDevanagari-Bold.ttf",
+            "bn": "NotoSansBengali-Bold.ttf",
+            "ta": "NotoSansTamil-Bold.ttf",
+            "te": "NotoSansTelugu.ttf",
+            "kn": "NotoSansKannada-Bold.ttf",
+            "ml": "NotoSansMalayalam.ttf",
+            "gu": "NotoSansGujarati-Bold.ttf",
+            "pa": "NotoSansGurmukhi-Bold.ttf",
+            "or": "NotoSansOriya.ttf",
+            "ur": "NotoNastaliqUrdu.ttf",
+            "en": "NotoSansDevanagari-Bold.ttf",
+        }
+        
+        autoselected_font = language_to_font_map.get(params.video_language, "NotoSansDevanagari-Bold.ttf")
+        
         font_names = get_all_fonts()
-        saved_font_name = config.ui.get("font_name", "MicrosoftYaHeiBold.ttc")
+        default_font = autoselected_font if autoselected_font in font_names else "MicrosoftYaHeiBold.ttc"
+        
+        saved_font_name = config.ui.get("font_name", default_font)
+        
+        # Override to the default font for the selected language if the language just changed
+        prev_lang_key = "prev_params_video_language"
+        if st.session_state.get(prev_lang_key) != params.video_language:
+            st.session_state[prev_lang_key] = params.video_language
+            saved_font_name = default_font
+            config.ui["font_name"] = default_font
+            
         saved_font_name_index = 0
         if saved_font_name in font_names:
             saved_font_name_index = font_names.index(saved_font_name)
+            
         params.font_name = st.selectbox(
             tr("Font"), font_names, index=saved_font_name_index
         )
         config.ui["font_name"] = params.font_name
 
-        subtitle_positions = [
-            (tr("Top"), "top"),
-            (tr("Center"), "center"),
-            (tr("Bottom"), "bottom"),
-            (tr("Custom"), "custom"),
-        ]
-        saved_subtitle_position = config.ui.get("subtitle_position", "bottom")
-        saved_position_index = 2
-        for i, (_, pos_value) in enumerate(subtitle_positions):
-            if pos_value == saved_subtitle_position:
-                saved_position_index = i
-                break
-        selected_index = st.selectbox(
-            tr("Position"),
-            index=saved_position_index,
-            options=range(len(subtitle_positions)),
-            format_func=lambda x: subtitle_positions[x][0],
-        )
-        params.subtitle_position = subtitle_positions[selected_index][1]
-        config.ui["subtitle_position"] = params.subtitle_position
-
-        if params.subtitle_position == "custom":
-            saved_custom_position = config.ui.get("custom_position", 70.0)
-            custom_position = st.text_input(
-                tr("Custom Position (% from top)"),
-                value=str(saved_custom_position),
-                key="custom_position_input",
-            )
-            try:
-                params.custom_position = float(custom_position)
-                if params.custom_position < 0 or params.custom_position > 100:
-                    st.error(tr("Please enter a value between 0 and 100"))
-                else:
-                    config.ui["custom_position"] = params.custom_position
-            except ValueError:
-                st.error(tr("Please enter a valid number"))
+        # Hidden style defaults
+        params.subtitle_position = "bottom"
+        config.ui["subtitle_position"] = "bottom"
+        params.stroke_color = "#000000"
+        params.stroke_width = 1.5
+        config.ui["subtitle_background_enabled"] = False
+        params.text_background_color = False
+        params.rounded_subtitle_background = False
+        config.ui["rounded_subtitle_background"] = False
 
         font_cols = st.columns([0.3, 0.7])
         with font_cols[0]:
