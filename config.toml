@@ -1,0 +1,73 @@
+[app]
+video_source = "pexels"
+hide_config = false
+edge_tts_timeout = 30
+tls_verify = true
+pexels_api_keys = [ "gqm2bM8NHJh0u3oq5wenboSdbiGeUsNlQWiIMVDE76H7xuLky7hFAoiR",]
+pixabay_api_keys = []
+coverr_api_keys = []
+twelvelabs_api_keys = []
+twelvelabs_rerank_terms = false
+llm_provider = "nvidia"
+openrouter_api_key = "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"
+openrouter_base_url = "https://openrouter.ai/api/v1"
+openrouter_model_name = "openai/gpt-oss-120b:free"
+nvidia_api_key = "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"
+nvidia_base_url = "https://integrate.api.nvidia.com/v1"
+nvidia_model_name = "google/diffusiongemma-26b-a4b-it"
+gemini_api_key = "AQ.Ab8RN6IEsQpndvBwxcgg4qYpX5O0pthEtaQ2XiG-VLXeXXW3iw"
+subtitle_provider = "edge"
+endpoint = ""
+material_directory = ""
+enable_redis = false
+redis_host = "localhost"
+redis_port = 6379
+redis_db = 0
+redis_password = ""
+max_concurrent_tasks = 5
+max_queued_tasks = 100
+match_materials_to_script = false
+video_codec = "libx264"
+
+[whisper]
+model_size = "large-v3"
+device = "CPU"
+compute_type = "int8"
+
+[proxy]
+
+[azure]
+speech_key = ""
+speech_region = ""
+
+[siliconflow]
+api_key = ""
+
+[elevenlabs]
+api_key = ""
+model_id = "eleven_multilingual_v2"
+
+[ui]
+hide_log = false
+upload_post_enabled = false
+upload_post_api_key = ""
+upload_post_username = ""
+upload_post_platforms = [ "tiktok", "instagram",]
+upload_post_auto_upload = false
+upload_post_youtube_privacy_status = "public"
+language = "en"
+tts_server = "azure-tts-v1"
+voice_name = "kn-IN-GaganNeural-Male"
+font_name = "NotoSansKannada-Bold.ttf"
+subtitle_position = "bottom"
+text_fore_color = "#FFFFFF"
+font_size = 60
+subtitle_background_enabled = false
+subtitle_background_color = "#000000"
+rounded_subtitle_background = false
+
+[chatterbox]
+base_url = "http://127.0.0.1:4123/v1"
+api_key = ""
+model_id = "chatterbox"
+voices = [ "default-Female",]
